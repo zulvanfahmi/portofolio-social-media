@@ -6,14 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import net.coobird.thumbnailator.Thumbnails;
 
 @Service
 public class ImageFileStorageService {
 
+    @SuppressWarnings("null")
     public List<String> storeTweetImages(
             List<MultipartFile> files,
             Long id_user) {
@@ -27,11 +30,11 @@ public class ImageFileStorageService {
             try {
 
                 if (!file.getContentType().startsWith("image/")) {
-                    throw new RuntimeException("Hanya file gambar yang diperbolehkan");
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Hanya file gambar yang diperbolehkan");
                 }
 
                 if (file.getSize() > 5 * 1024 * 1024) { // 5MB
-                    throw new RuntimeException("File terlalu besar");
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "size file terlalu besar");
                 }
 
                 File directory = new File(UPLOAD_DIR_TWEET);
@@ -51,7 +54,7 @@ public class ImageFileStorageService {
 
             } catch (IOException e) {
 
-                throw new RuntimeException("Gagal upload file: " + file.getOriginalFilename(), e);
+                throw new ResponseStatusException(HttpStatus.CONFLICT,  "Gagal upload file: " + file.getOriginalFilename() +"---"+ e.getMessage());
 
             }
         }

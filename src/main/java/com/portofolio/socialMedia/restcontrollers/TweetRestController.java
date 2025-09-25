@@ -40,7 +40,7 @@ public class TweetRestController {
             ObjectMapper objectMapper = new ObjectMapper();
             String listUrlImages = objectMapper.writeValueAsString(fileUrls);
 
-            createNewTweetDTO.setImageUrls(listUrlImages);
+            createNewTweetDTO.setImage_urls(listUrlImages);
         }
 
         tweetService.createNewTweet(createNewTweetDTO);

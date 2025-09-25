@@ -18,7 +18,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class FollowEntity {
+public class FollowEntity extends BaseProperties {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,12 +26,12 @@ public class FollowEntity {
 
     // siapa yang follow
     @ManyToOne
-    @JoinColumn(name = "follower_id", nullable = false)
+    @JoinColumn(name = "id_follower", nullable = false)
     private UserEntity follower;
 
     // siapa yang di-follow
     @ManyToOne
-    @JoinColumn(name = "following_id", nullable = false)
+    @JoinColumn(name = "id_following", nullable = false)
     private UserEntity following;
 
 }

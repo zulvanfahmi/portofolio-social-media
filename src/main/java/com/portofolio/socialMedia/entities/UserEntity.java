@@ -45,7 +45,7 @@ public class UserEntity extends BaseProperties {
     private String bio;
 
     @Column
-    private String profileImageUrl;
+    private String profile_image_url;
 
     // RELASI
 

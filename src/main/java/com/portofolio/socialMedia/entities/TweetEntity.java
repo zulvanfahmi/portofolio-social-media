@@ -34,7 +34,7 @@ public class TweetEntity extends BaseProperties{
     private String content;
     
     @Column(columnDefinition = "Text")
-    private String imageUrls;
+    private String image_urls;
 
     // RELASI
 
@@ -45,7 +45,7 @@ public class TweetEntity extends BaseProperties{
 
     // Relasi ke Tweet lain (self-join untuk reply)
     @ManyToOne
-    @JoinColumn(name = "id_parentTweet")
+    @JoinColumn(name = "id_parent_tweet")
     private TweetEntity parentTweet;
 
     @OneToMany(mappedBy = "parentTweet")

@@ -10,7 +10,7 @@ import lombok.ToString;
 public class CreateNewTweetDTO {
 
     private String content;
-    private String imageUrls;
+    private String image_urls;
     private Long id_user;
     private Long id_parentTweet;
     private Long created_by;
