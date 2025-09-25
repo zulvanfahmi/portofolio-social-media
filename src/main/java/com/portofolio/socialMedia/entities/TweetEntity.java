@@ -25,7 +25,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TweetEntity extends BaseProperties{
     
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id_tweet;
@@ -33,8 +33,8 @@ public class TweetEntity extends BaseProperties{
     @Column(nullable = false, length = 280)
     private String content;
     
-    @Column
-    private String mediaUrl;
+    @Column(columnDefinition = "Text")
+    private String imageUrls;
 
     // RELASI
 

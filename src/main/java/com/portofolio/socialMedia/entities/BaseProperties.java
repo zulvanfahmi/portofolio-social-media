@@ -4,7 +4,6 @@ import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,11 +17,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BaseProperties {
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private Long created_by;
 
-    @Column(nullable = false, updatable = false)
-    private Date created_on;
+    @Column(nullable = false, 
+    updatable = false, 
+    columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    private Date created_on = new Date();
 
     @Column
     private Long modified_by;
@@ -38,11 +39,6 @@ public class BaseProperties {
 
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean is_delete = false;
-
-    @PrePersist
-    protected void onCreate() {
-        created_on = new Date();
-    }
 
     @PreUpdate
     protected void onUpdate() {
