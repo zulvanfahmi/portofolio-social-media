@@ -17,12 +17,13 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BaseProperties {
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
     private Long created_by;
 
-    @Column(nullable = false, 
-    updatable = false, 
-    columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(
+        nullable = false, 
+        updatable = false, 
+        columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private Date created_on = new Date();
 
     @Column

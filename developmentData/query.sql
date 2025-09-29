@@ -2,11 +2,6 @@ select * from m_user
 select * from follows
 select * from tweet
 
-u.profile_image_url,
-u.username,
-u.name,
-f.id_following
-
 -- utk lihat siapa yg memfollow user 1 (follower)
 select
 u.profile_image_url,
