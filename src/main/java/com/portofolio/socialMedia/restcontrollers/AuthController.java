@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.portofolio.socialMedia.configs.JwtService;
 import com.portofolio.socialMedia.dto.AuthRequestDTO;
+import com.portofolio.socialMedia.services.JwtService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,9 +29,9 @@ public class AuthController {
     @PostMapping("/login")
     public String authenticate(@RequestBody AuthRequestDTO request) {
         authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
-        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
         return jwtService.generateToken(userDetails);
     }
 }

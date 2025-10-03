@@ -1,28 +1,41 @@
-package com.portofolio.socialMedia.configs;
+package com.portofolio.socialMedia.services;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
 
-    private final String secretKey = "404E635266556A586E3272357538782F413F4428472B4B6250655368566D5971";
+    private final String secretKey = "oPqinHf0JJYFH9Rd3E1thj5JNb61bllWEd8fystDLHE=";
 
     public String generateToken(UserDetails userDetails) {
+
+        Map<String, Object> claims = new HashMap<>();
+
+        String roles = userDetails.getAuthorities().stream()
+                                  .map(GrantedAuthority::getAuthority)
+                                  .collect(Collectors.joining(","));
+
+        claims.put("roles", roles);
+
         return Jwts.builder()
-            .setClaims(new HashMap<>())
+            .setClaims(claims)
             .setSubject(userDetails.getUsername())
             .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24)) // 24 jam
+            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 24)) // 24 hours
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
             .compact();
     }

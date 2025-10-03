@@ -33,7 +33,7 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/auth/**").permitAll() // Endpoint login/register
+                .requestMatchers("/api/auth/**", "/api/user/create").permitAll() // Endpoint login/register
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
@@ -45,6 +45,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @SuppressWarnings("deprecation")
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();

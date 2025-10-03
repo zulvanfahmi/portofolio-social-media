@@ -1,11 +1,16 @@
 package com.portofolio.socialMedia.services;
 
+import java.util.Date;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.portofolio.socialMedia.dto.CreateNewTweetDTO;
+import com.portofolio.socialMedia.dto.TweetDTO;
 import com.portofolio.socialMedia.entities.TweetEntity;
 import com.portofolio.socialMedia.entities.UserEntity;
 import com.portofolio.socialMedia.repositories.TweetRepository;
@@ -20,7 +25,7 @@ public class TweetService {
     @Autowired
     private UserRepository userRepository;
 
-    public void createNewTweet(CreateNewTweetDTO createNewTweetDTO) {
+    public void createNewTweet(TweetDTO createNewTweetDTO) {
 
         UserEntity userEntity = userRepository.findById(createNewTweetDTO.getId_user())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -42,6 +47,43 @@ public class TweetService {
         newTweet.setCreated_by(createNewTweetDTO.getCreated_by());
 
         tweetRepository.save(newTweet);
+
+    }
+
+    public TweetDTO getTweetByIdAndNotDeleted(Long idTweet) {
+
+        TweetDTO tweet = tweetRepository.getTweetByIdAndNotDeleted(idTweet);
+
+        return tweet;
+
+    }
+
+    public void deleteById(Long idTweet) {
+
+        // get user deleted tweet
+
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        String username = null;
+        if (principal instanceof UserDetails) {
+            username =  ((UserDetails) principal).getUsername();
+        }
+
+        Optional<UserEntity> userEntity = userRepository.findByUsernameAndNotDeleted(username);
+
+        if (userEntity.isEmpty()) {
+            
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "user not found");
+
+        }
+
+        UserEntity user = userEntity.get();
+
+        // set deleted tweet
+        TweetEntity tweet = tweetRepository.getReferenceById(idTweet);
+        tweet.setIs_delete(true);
+        tweet.setDeleted_by(user.getId_user());
+        tweet.setDeleted_on(new Date());
 
     }
 

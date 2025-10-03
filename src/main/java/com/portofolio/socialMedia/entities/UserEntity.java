@@ -47,7 +47,7 @@ public class UserEntity extends BaseProperties {
     @Column
     private String profile_image_url;
 
-    @Column(columnDefinition = "VARCHAR(20) DEFAULT 'USER'")
+    @Column
     private String role;
 
     // RELASI

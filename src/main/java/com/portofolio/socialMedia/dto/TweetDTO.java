@@ -7,7 +7,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class CreateNewTweetDTO {
+public class TweetDTO {
 
     private String content;
     private String image_urls;
