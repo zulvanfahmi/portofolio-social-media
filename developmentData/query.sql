@@ -25,3 +25,16 @@ inner join follows f on u.id_user = f.id_following
 where u.is_delete = false
 and f.is_delete = false
 and f.id_follower = 1
+
+-- utk get tweet by idtweet
+SELECT 
+t.id_tweet, 
+t.content, 
+t.image_urls, 
+u.username, 
+t.id_parent_tweet 
+FROM tweet t
+inner join m_user u on t.id_user = u.id_user
+where t.id_tweet = 1
+and u.is_delete = false
+and t.is_delete = false

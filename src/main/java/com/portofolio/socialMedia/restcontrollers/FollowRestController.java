@@ -1,19 +1,22 @@
-package com.portofolio.socialMedia.restcontrollers;
+package com.portofolio.socialMedia.restControllers;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.portofolio.socialMedia.dto.ListUserDTO;
 import com.portofolio.socialMedia.services.FollowService;
+import com.portofolio.socialMedia.utils.ApiResponseWrapper;
 
 @RestController
 @RequestMapping("/api")
@@ -23,56 +26,80 @@ public class FollowRestController {
     private FollowService followService;
     
     // Follow user
-    @PostMapping("/{username}/follow/{usernameToFollow}")
-    public ResponseEntity<String> followUser(
-        @PathVariable String username,
+    @PostMapping("/follow/{usernameToFollow}")
+    public ResponseEntity<ApiResponseWrapper<String>> followUser(
         @PathVariable String usernameToFollow
     ) {
-        followService.followUser(username, usernameToFollow);
-        return ResponseEntity.ok("Followed user " + usernameToFollow);
+        followService.followUser(usernameToFollow);
+        return ResponseEntity.ok(
+            new ApiResponseWrapper<>(
+                "Success following user " + usernameToFollow, 
+                null));
     }
 
     // Unfollow user
-    @DeleteMapping("/{username}/unfollow/{usernameToUnfollow}")
-    public ResponseEntity<String> unfollowUser(
-        @PathVariable String username,
+    @DeleteMapping("/unfollow/{usernameToUnfollow}")
+    public ResponseEntity<ApiResponseWrapper<String>> unfollowUser(
         @PathVariable String usernameToUnfollow
     ) {
-        followService.unfollowUser(username, usernameToUnfollow);
-        return ResponseEntity.ok("Unfollowed user " + usernameToUnfollow);
+        followService.unfollowUser(usernameToUnfollow);
+        return ResponseEntity.ok( 
+            new ApiResponseWrapper<>(
+                "Unfollowed user " + usernameToUnfollow,
+                null)
+            );
     }
 
-    // Ambil daftar followers
     // get /api/follow/{username}/followers
     @GetMapping("/{username}/followers")
-    public ResponseEntity<List<ListUserDTO>> getListFollower(
+    public ResponseEntity<ApiResponseWrapper<Map<String, Object>>> getListFollower(
         @PathVariable String username
     ) {
         List<ListUserDTO> listUserData = followService.getListFollower(username);
-        return ResponseEntity.ok(listUserData);
+
+        if (listUserData.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT)
+            .body(new ApiResponseWrapper<>("No follower found", null));
+        }
+
+        Map<String, Object> response = new HashMap<>(Map.of(
+            "countData", listUserData.size(),
+            "listData", listUserData
+        ));
+
+        return ResponseEntity.ok(
+            new ApiResponseWrapper<>("Success retrieve list follower", response));
     }
 
-    // Ambil daftar following
     // get /api/follow/{username}/following
     @GetMapping("/{username}/following")
-    public ResponseEntity<List<ListUserDTO>> getListFollowing(
+    public ResponseEntity<ApiResponseWrapper<Map<String, Object>>> getListFollowing(
         @PathVariable String username
     ) {
         List<ListUserDTO> listUserData = followService.getListFollowing(username);
-        return ResponseEntity.ok(listUserData);
+        
+        if (listUserData.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NO_CONTENT)
+            .body(new ApiResponseWrapper<>("No following found", null));
+        }
+
+        Map<String, Object> response = new HashMap<>(Map.of(
+            "countData", listUserData.size(),
+            "listData", listUserData
+        ));
+
+        return ResponseEntity.ok(
+            new ApiResponseWrapper<>("Success retrieve list following", response));
     }
 
-    // Cek apakah user A sudah follow user B
     // GET /api/follow/check?follower={username}&following={username}
-    @GetMapping("/follow/check")
-    public ResponseEntity<Boolean> isFollowdBy(
-        @RequestParam String follower,
-        @RequestParam String following
+    @GetMapping("/user-is-following/{targetUsername}")
+    public ResponseEntity<ApiResponseWrapper<Boolean>> isFollowing(
+        @PathVariable String targetUsername
     ) {
+        Boolean checkResult = followService.isFollowing(targetUsername);
 
-        Boolean checkResult = followService.isFollowedBy(follower, following);
-        return ResponseEntity.ok(checkResult);
-
+        return ResponseEntity.ok(
+            new ApiResponseWrapper<>("Success checking", checkResult));
     }
-
 }

@@ -1,10 +1,11 @@
-package com.portofolio.socialMedia.restcontrollers;
+package com.portofolio.socialMedia.restControllers;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import com.portofolio.socialMedia.dto.CreateNewUserDTO;
 import com.portofolio.socialMedia.dto.ListUserDTO;
 import com.portofolio.socialMedia.services.OtpService;
 import com.portofolio.socialMedia.services.UserService;
+import com.portofolio.socialMedia.utils.ApiResponseWrapper;
 
 @RestController
 @RequestMapping("/api/user")
@@ -32,113 +34,100 @@ public class UserRestController {
 
     // update name, bio
     @PutMapping("update/biodata")
-    public ResponseEntity<String> updateUserBiodata(
-        @RequestParam String name,
-        @RequestParam String bio,
-        @RequestParam String username
-    ) {
+    public ResponseEntity<ApiResponseWrapper<String>> updateUserBiodata(
+            @RequestParam String name,
+            @RequestParam String bio) {
 
-        userService.updateUserBiodata(name, bio, username);
+        userService.updateUserBiodata(name, bio);
 
-        return ResponseEntity.ok("Success update user biodata");
-
+        return ResponseEntity.ok(
+                new ApiResponseWrapper<>(
+                        "Success update user biodata",
+                        null));
     }
 
     // update photo profile
     @PutMapping("update/photoprofile")
-    public ResponseEntity<String> updatePhotoProfile(
-        @RequestParam MultipartFile imagefile,
-        @RequestParam String username
-    ) {
+    public ResponseEntity<ApiResponseWrapper<String>> updatePhotoProfile(
+            @RequestParam MultipartFile imagefile) {
 
-        userService.updatePhotoProfile(username, imagefile);
+        userService.updatePhotoProfile(imagefile);
 
-        return ResponseEntity.ok("Success updata Photo Profile");
-
+        return ResponseEntity.ok(
+                new ApiResponseWrapper<>(
+                        "Success updata Photo Profile",
+                        null));
     }
 
     // check apakah username sudah dipakai
     @GetMapping("check/isUsernameExist")
-    public ResponseEntity<Map<String, Object>> isUsernameExist(
-        @RequestParam String oldUsername,
-        @RequestParam String newUsername
-    ) {
+    public ResponseEntity<ApiResponseWrapper<Map<String, Boolean>>> isUsernameExist(
+            @RequestParam String newUsername
+            ) {
 
-        Map<String, Object> response = new HashMap<>();
+        Map<String, Boolean> result = new HashMap<>();
 
-        if (userService.isUsernameExist(oldUsername, newUsername)) {
-            
-            response.put("message", "Username is already taken");
-            response.put("isUsernameExist", true);
+        String message;
+        boolean isUsernameExists = userService.isUsernameExist(newUsername);
 
-        } else {
+        message = "Username is available";
+        result.put("isUsernameExist", isUsernameExists);
 
-            response.put("message", "Username is not taken");
-            response.put("isUsernameExist", false);
-
-        }
-
-        return ResponseEntity.ok(response);
-
+        return ResponseEntity.ok(new ApiResponseWrapper<>(message, result));
     }
 
     // update email
     @PostMapping("/verifyEmail")
-    public ResponseEntity<String> verifyEmail(
-        @RequestParam String otp,
-        @RequestParam String email) {
-        
+    public ResponseEntity<ApiResponseWrapper<String>> verifyEmail(
+            @RequestParam String otp,
+            @RequestParam String email) {
+
         if (!otpService.verifyOtp(email, otp)) {
-            return ResponseEntity.ok("otp is not valid");   
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseWrapper<>("otp is not valid", null));
         }
 
         userService.updateEmail(email);
 
-        return ResponseEntity.ok("email : "+ email +" is valid, success update email");
-
+        return ResponseEntity
+                .ok(new ApiResponseWrapper<>("email : " + email + " is valid, success update email", null));
     }
 
     // update password
     @PutMapping("/update/password")
-    public ResponseEntity<String> updatePassword(
-        @RequestParam String oldPassword,
-        @RequestParam String newPassword
-    ) {
+    public ResponseEntity<ApiResponseWrapper<String>> updatePassword(
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword) {
 
         userService.updatePassword(oldPassword, newPassword);
 
-        return ResponseEntity.ok("Success updating password");
+        return ResponseEntity.ok(new ApiResponseWrapper<>("Success updating password", null));
     }
 
     // delete user
     @PostMapping("/delete")
-    public ResponseEntity<String> deleteUser(){
+    public ResponseEntity<ApiResponseWrapper<String>> deleteUser() {
 
         userService.deleteUser();
 
-        return ResponseEntity.ok("Success delete user");
+        return ResponseEntity.ok(new ApiResponseWrapper<>("Success delete user", null));
     }
-    
 
     // cari user berdasar nama dan username
     @GetMapping("/search")
-    public ResponseEntity<List<ListUserDTO>> searchByNameOrUsername
-    (
-        @RequestParam String keyword
-    ) {
-        return ResponseEntity.ok(userService.searchByNameOrUsername(keyword));
+    public ResponseEntity<ApiResponseWrapper<List<ListUserDTO>>> searchByNameOrUsername(
+            @RequestParam String keyword) {
+        return ResponseEntity.ok(new ApiResponseWrapper<>("Success query data" , userService.searchByNameOrUsername(keyword)));
     }
 
     // regis user baru
     @PostMapping("/create")
-    public ResponseEntity<String> createUser(
-        @RequestBody CreateNewUserDTO createNewUserDTO
-    ) {
+    public ResponseEntity<ApiResponseWrapper<String>> createUser(
+            @RequestBody CreateNewUserDTO createNewUserDTO) {
 
         userService.createNewUser(createNewUserDTO);
 
-        return ResponseEntity.ok("Success Create New User");
-
+        return ResponseEntity.ok(new ApiResponseWrapper<>("Success Create New User", null));
     }
-
 }

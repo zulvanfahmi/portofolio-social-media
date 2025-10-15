@@ -9,3 +9,9 @@ INSERT INTO follows(id_follower, id_following, created_by) VALUES
 (1,2,1),
 (3,1,1),
 (2,1,2);
+
+INSERT INTO tweet(content, image_urls, id_user, id_parent_tweet, created_by) VALUES
+('dummyContentTweet1', null, 5, null, 5),
+('dummyContentTweet2', null, 5, null, 5),
+('dummyContentTweet3', null, 5, null, 5),
+('dummyContentTweet4', null, 5, null, 5);

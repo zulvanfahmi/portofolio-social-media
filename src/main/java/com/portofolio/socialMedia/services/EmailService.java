@@ -14,7 +14,7 @@ public class EmailService {
     @Autowired
     private JavaMailSender jms;
 
-    @Value("$(spring.mail.username)")
+    @Value("${spring.mail.username}")
     private String sender;
 
     public void sendEmail(
@@ -32,6 +32,5 @@ public class EmailService {
             e.printStackTrace();
             throw new ResponseStatusException(HttpStatusCode.valueOf(452), "Email Failed to sent");
         }
-
     }
 }

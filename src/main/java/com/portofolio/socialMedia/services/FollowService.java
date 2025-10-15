@@ -2,7 +2,6 @@ package com.portofolio.socialMedia.services;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,91 +23,78 @@ public class FollowService {
     @Autowired
     private UserRepository userRepository;
 
-    public void followUser(String username, String usernameToFollow) {
+    @Autowired
+    private UserService userService;
 
-        if (username.equals(usernameToFollow)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "same user");
+    public void followUser(String usernameToFollow) {
+
+        UserEntity user = userService.getCurrentUserEntity();
+
+        if (user.getUsername().equals(usernameToFollow)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot follow yourself");
         }
 
-        UserEntity follower = userRepository.findByUsernameAndNotDeleted(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "follower not found"));
-
         UserEntity following = userRepository.findByUsernameAndNotDeleted(usernameToFollow)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "user to follow is not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target user not found: " + usernameToFollow));
 
-        // Cek apakah sudah follow
         if (followRepository.existsByFollowerAndFollowing(
-            follower.getId_user(), 
+            user.getId_user(), 
             following.getId_user())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "already following this user");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "You already follow this user");
         }
 
         FollowEntity followEntity = new FollowEntity();
-        followEntity.setFollower(follower);
+        followEntity.setFollower(user);
         followEntity.setFollowing(following);
-        followEntity.setCreated_by(follower.getId_user());
+        followEntity.setCreated_by(user.getId_user());
 
         followRepository.save(followEntity);
-
     }
 
-    public void unfollowUser(String username, String usernameToUnfollow) {
+    public void unfollowUser(String usernameToUnfollow) {
 
-        if (username.equals(usernameToUnfollow)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "same user");
+        UserEntity user = userService.getCurrentUserEntity();
+
+        if (user.getUsername().equals(usernameToUnfollow)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You cannot unfollow yourself");
         }
 
-        UserEntity follower = userRepository.findByUsernameAndNotDeleted(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "follower is not found"));
-
         UserEntity following = userRepository.findByUsernameAndNotDeleted(usernameToUnfollow)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "user to follow is not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Target user not found: " + usernameToUnfollow));
 
-        Optional<FollowEntity> optionalFollowEntity = followRepository.findByIdFollowerAndIdFollowing(follower.getId_user(), following.getId_user());
-        
-        FollowEntity followEntity = optionalFollowEntity.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "user is not following"));
+        FollowEntity followEntity = followRepository
+        .findByIdFollowerAndIdFollowing(user.getId_user(), following.getId_user())
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "You are not following this user"));
 
-        followEntity.setDeleted_by(follower.getId_user());
+        followEntity.setDeleted_by(user.getId_user());
         followEntity.setDeleted_on(new Date());
         followEntity.setIs_delete(true);
         followRepository.save(followEntity);
-
     }
 
     public List<ListUserDTO> getListFollower(String username) {
 
         List<ListUserDTO> listFollower = followRepository.getListFollower(username);
 
-        if (listFollower.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "no data follower");
-        }
-
         return listFollower;
-
     }
     
     public List<ListUserDTO> getListFollowing(String username) {
 
         List<ListUserDTO> listFollowing = followRepository.getListFollowing(username);
 
-        if (listFollowing.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "no data following");
-        }
-
         return listFollowing;
-
     }
 
-    public Boolean isFollowedBy(String follower, String following) {
+    public Boolean isFollowing(String targetUsername) {
 
-        UserEntity userFollower = userRepository.findByUsernameAndNotDeleted(follower)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "follower not exist"));
+        UserEntity user = userService.getCurrentUserEntity();
 
-        UserEntity userFollowing = userRepository.findByUsernameAndNotDeleted(following)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "following not exist"));
+        UserEntity userTarget = userRepository.findByUsernameAndNotDeleted(targetUsername)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, targetUsername + " is not found"));
 
-        return followRepository.existsByFollowerAndFollowing(userFollower.getId_user(), userFollowing.getId_user());
-
+        return followRepository.existsByFollowerAndFollowing(user.getId_user(), userTarget.getId_user());
     }
 
 

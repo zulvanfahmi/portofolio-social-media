@@ -1,4 +1,4 @@
-package com.portofolio.socialMedia.configs;
+package com.portofolio.socialMedia.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

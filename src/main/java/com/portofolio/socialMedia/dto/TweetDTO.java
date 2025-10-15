@@ -9,10 +9,10 @@ import lombok.ToString;
 @ToString
 public class TweetDTO {
 
+    private Long id_tweet;
     private String content;
     private String image_urls;
-    private Long id_user;
+    private String username;
     private Long id_parentTweet;
-    private Long created_by;
 
 }

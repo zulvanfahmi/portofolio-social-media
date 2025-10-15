@@ -51,7 +51,6 @@ public class UserEntity extends BaseProperties {
     private String role;
 
     // RELASI
-
     // Relasi ke TweetEntity
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TweetEntity> tweets = new ArrayList<>();

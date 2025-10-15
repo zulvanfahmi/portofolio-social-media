@@ -22,7 +22,7 @@ public class FollowEntity extends BaseProperties {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id_follow;
 
     // siapa yang follow
     @ManyToOne

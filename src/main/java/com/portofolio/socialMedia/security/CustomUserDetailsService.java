@@ -1,4 +1,4 @@
-package com.portofolio.socialMedia.services;
+package com.portofolio.socialMedia.security;
 
 import java.util.Optional;
 
@@ -26,7 +26,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Optional<UserEntity> user = userRepository.findByUsernameAndNotDeleted(username);
 
         if (user.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with username: " + username);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Username or Password (001)");
         }
 
         UserEntity userEntity = user.get();
@@ -38,6 +38,5 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .build();
         
         return userDetails;
-        
     }
 }

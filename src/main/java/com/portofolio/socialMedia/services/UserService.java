@@ -4,13 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,8 +20,10 @@ import com.portofolio.socialMedia.dto.ListUserDTO;
 import com.portofolio.socialMedia.entities.UserEntity;
 import com.portofolio.socialMedia.repositories.UserRepository;
 
+import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 
+@Slf4j
 @Service
 public class UserService {
 
@@ -31,57 +32,65 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Value("${photoprofile.file.directory}")
+    private String UPLOAD_DIR_PHOTOPROFILE;
+
+    @Value("${image.file.size}")
+    private Long PHOTOPROFILE_SIZE;
+
+    public UserEntity getCurrentUserEntity() {
+
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        UserEntity user = userRepository.findByUsernameAndNotDeleted(username).orElseThrow(() ->
+            new ResponseStatusException(HttpStatus.NOT_FOUND, "User Not Found"));
+
+        return user;
+    }
     
-    public void updateUserBiodata(String name, String bio, String username) {
+    public void updateUserBiodata(String name, String bio) {
 
-        Optional<UserEntity> userEntity = userRepository.findByUsernameAndNotDeleted(username);
+        UserEntity user = getCurrentUserEntity();
 
-        if (userEntity.isEmpty()) {
-            
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "user not found");
-
-        }
-
-        UserEntity userUpdated = userEntity.get();
-        userUpdated.setBio(bio);
-        userUpdated.setName(name);
-        userUpdated.setModified_by(userUpdated.getId_user());
-        userRepository.save(userUpdated);
-
+        user.setBio(bio);
+        user.setName(name);
+        user.setModified_by(user.getId_user());
+        userRepository.save(user);
     }
 
     @SuppressWarnings("null")
-    public void updatePhotoProfile(String username, MultipartFile imageFile) {
+    public void updatePhotoProfile(MultipartFile imageFile) {
 
-        Optional<UserEntity> userEntity = userRepository.findByUsernameAndNotDeleted(username);
-
-        if (userEntity.isEmpty()) {
-            
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "user not found");
-
-        }
-
-        UserEntity userUpdated = userEntity.get();
-
-        final String UPLOAD_DIR_PHOTOPROFILE = "uploads/images/photo_profile/";
+        UserEntity user = getCurrentUserEntity();
 
         String fileUrls;
 
             try {
 
-                if (!imageFile.getContentType().startsWith("image/")) {
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Hanya file gambar yang diperbolehkan");
+                String contentType = imageFile.getContentType();
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only Image File Allowed");
                 }
 
-                if (imageFile.getSize() > 5 * 1024 * 1024) { // 5MB
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "size file terlalu besar");
+                String originalName = imageFile.getOriginalFilename();
+                if (originalName == null || 
+                !(originalName.endsWith(".jpg") || originalName.endsWith(".jpeg") || originalName.endsWith(".png"))) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only JPG, JPEG or PNG is Allowed");
+                }
+
+                if (imageFile.getSize() > PHOTOPROFILE_SIZE) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File Size is too big");
                 }
 
                 File directory = new File(UPLOAD_DIR_PHOTOPROFILE);
                 if (!directory.exists())directory.mkdirs();
 
-                String fileName = Long.toString(userUpdated.getId_user()) + "_" + System.currentTimeMillis() + "_" + UUID.randomUUID()
-                        + "_" + imageFile.getOriginalFilename();
+                String fileName = 
+                    Long.toString(user.getId_user()) 
+                    + "_" + System.currentTimeMillis() 
+                    + "_" + UUID.randomUUID()
+                    + "_" + imageFile.getOriginalFilename();
                 
                 File outputFile = new File(UPLOAD_DIR_PHOTOPROFILE + fileName);
 
@@ -94,105 +103,52 @@ public class UserService {
 
             } catch (IOException e) {
 
-                throw new ResponseStatusException(HttpStatus.CONFLICT,  "Gagal upload file: " + imageFile.getOriginalFilename() +"---"+ e.getMessage());
-
+                log.error("Failed Upload File: {}", e.getMessage(), e);
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,  "Failed Upload File");
             }
-
-        userUpdated.setProfile_image_url(fileUrls);
-        userUpdated.setModified_by(userUpdated.getId_user());
-        userRepository.save(userUpdated);
-
+            
+        user.setProfile_image_url(fileUrls);
+        user.setModified_by(user.getId_user());
+        userRepository.save(user);
     }
 
-    public Boolean isUsernameExist(
-        String oldUsername,
-        String newUsername
-    ){
+    public Boolean isUsernameExist(String newUsername){
 
-        Optional<UserEntity> userEntity = userRepository.findByUsernameAndNotDeleted(oldUsername);
+        UserEntity user = getCurrentUserEntity();
 
-        if (userEntity.isEmpty()) {
-            
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "user not found");
+        if (user.getUsername().equals(newUsername)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "new username must be different from current one");
 
-        }
+        Boolean isUsernameExist = userRepository.isUsernameExist(newUsername);
 
-        UserEntity user = userEntity.get();
+        if (isUsernameExist) throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is Already Used");
 
-        if (user.getUsername().equals(newUsername)) {
-            
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "usernames are same");
-
-        }
-
-        if(userRepository.isUsernameExist(newUsername)){
-
-            return true;
-
-        }
-
-        return false;
-
+        return isUsernameExist;
     }
 
     public void updatePassword(String oldPassword, String newPassword) {
 
-        // 1. Dapatkan objek autentikasi dari konteks
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUserEntity();
 
-        // 2. Cek dan casting objek principal
-        String username = null;
-        if (principal instanceof UserDetails) {
-            username =  ((UserDetails) principal).getUsername();
-        }
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST ,"Old Password is Incorrect");
 
-        Optional<UserEntity> userEntity = userRepository.findByUsernameAndNotDeleted(username);
-
-        if (userEntity.isEmpty()) {
-            
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "user not found");
-
-        }
-
-        UserEntity user = userEntity.get();
-
-        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new RuntimeException("Old password is incorrect");
-        }
+        if (passwordEncoder.matches(newPassword, user.getPassword())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be different from old password");
 
         String encodedNewPassword = passwordEncoder.encode(newPassword);
         user.setPassword(encodedNewPassword);
         user.setModified_by(user.getId_user());
         userRepository.save(user);
-
     }
 
     public Boolean updateEmail(String email) {
 
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUserEntity();
 
-        String username = null;
-        if (principal instanceof UserDetails) {
-            username =  ((UserDetails) principal).getUsername();
-        }
-
-        Optional<UserEntity> userEntity = userRepository.findByUsernameAndNotDeleted(username);
-
-        if (userEntity.isEmpty()) {
-            
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "user not found");
-
-        }
-
-        UserEntity user = userEntity.get();
         user.setEmail(email);
         user.setModified_by(user.getId_user());
-        user.setModified_on(new Date());
 
         userRepository.save(user);
 
         return true;
-
     }
 
     public List<ListUserDTO> searchByNameOrUsername(String keyword) {
@@ -200,14 +156,12 @@ public class UserService {
         List<ListUserDTO> listUser =  userRepository.searchByNameOrUsername(keyword);
 
         return listUser;
-
     }
 
     public void createNewUser(CreateNewUserDTO newUserDTO) {
 
-        System.out.println(newUserDTO.toString());
-
         UserEntity userEntity = new UserEntity();
+
         userEntity.setUsername(newUserDTO.getUsername());
         userEntity.setEmail(newUserDTO.getEmail());
         userEntity.setPassword(passwordEncoder.encode(newUserDTO.getPassword()));
@@ -216,34 +170,17 @@ public class UserService {
         userEntity.setCreated_by(0L);
 
         userRepository.save(userEntity);
-
     }
 
     public void deleteUser() {
 
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        UserEntity user = getCurrentUserEntity();
 
-        String username = null;
-        if (principal instanceof UserDetails) {
-            username =  ((UserDetails) principal).getUsername();
-        }
-
-        Optional<UserEntity> userEntity = userRepository.findByUsernameAndNotDeleted(username);
-
-        if (userEntity.isEmpty()) {
-            
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "user not found");
-
-        }
-
-        UserEntity user = userEntity.get();
         user.setIs_delete(true);
         user.setDeleted_by(user.getId_user());
         user.setDeleted_on(new Date());
 
         userRepository.save(user);
-        
-
     }
 
 }

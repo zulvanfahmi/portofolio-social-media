@@ -1,0 +1,32 @@
+{"properties": [
+  {
+    "name": "jwt.secret",
+    "type": "java.lang.String",
+    "description": "secret key for signing JWT"
+  },
+  {
+    "name": "photoprofile.file.directory",
+    "type": "java.lang.String",
+    "description": "folder directory for photo profile"
+  },
+  {
+    "name": "tweeet.file.directory",
+    "type": "java.lang.String",
+    "description": "folder directory for tweet image"
+  },
+  {
+    "name": "image.file.size",
+    "type": "java.lang.String",
+    "description": "file size for image"
+  },
+  {
+    "name": "jwt.expiration.duration",
+    "type": "java.lang.String",
+    "description": "expiration duration for token jwt"
+  },
+  {
+    "name": "otp.timeout.minutes",
+    "type": "java.lang.String",
+    "description": "timeout value for email otp in redis'"
+  }
+]}
